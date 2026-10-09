@@ -1057,11 +1057,12 @@ impl Kiorg {
 
 impl eframe::App for Kiorg {
     fn ui(&mut self, ui: &mut egui::Ui, _: &mut eframe::Frame) {
+        let ctx = ui.ctx().clone();
         #[cfg(feature = "debug")]
         ui.set_debug_on_hover(true);
 
-        self.poll_preview_content(ui);
-        self.poll_popup_viewers(ui);
+        self.poll_preview_content(&ctx);
+        self.poll_popup_viewers(&ctx);
         self.check_notifications();
 
         if self
@@ -1082,19 +1083,19 @@ impl eframe::App for Kiorg {
 
         // Update preview cache only if selection changed
         if self.selection_changed {
-            preview::update_selected_cache(self, ui);
+            preview::update_selected_cache(self, &ctx);
             self.selection_changed = false; // Reset flag after update
         }
 
         terminal::draw(ui, self);
 
-        self.process_input(ui);
+        self.process_input(&ctx);
 
         match &mut self.show_popup {
             Some(PopupType::Help) => {
                 let mut keep_open = true;
                 help_window::show_help_window(
-                    ui,
+                    &ctx,
                     self.get_shortcuts(),
                     &mut keep_open,
                     &self.colors,
@@ -1104,29 +1105,29 @@ impl eframe::App for Kiorg {
                 }
             }
             Some(PopupType::About) => {
-                about::show_about_popup(ui, self);
+                about::show_about_popup(&ctx, self);
             }
             Some(PopupType::GenericMessage(_, _)) => {
-                generic_message::show_generic_message_popup(ui, self);
+                generic_message::show_generic_message_popup(&ctx, self);
             }
             Some(PopupType::Exit) => {
-                exit::draw(ui, self);
+                exit::draw(&ctx, self);
             }
             Some(PopupType::Delete(_, _)) => {
-                self.handle_delete_confirmation(ui);
+                self.handle_delete_confirmation(&ctx);
             }
             Some(PopupType::DeleteProgress(_)) => {
-                delete::handle_delete_progress(ui, self);
+                delete::handle_delete_progress(&ctx, self);
             }
             Some(PopupType::OpenWith) => {
-                open_with_popup::draw(ui, self);
+                open_with_popup::draw(&ctx, self);
             }
             Some(PopupType::AddEntry(_)) => {
-                add_entry::draw(ui, self);
+                add_entry::draw(&ctx, self);
             }
             Some(PopupType::Bookmarks(_)) => {
                 // Handle bookmark popup
-                let bookmark_action = bookmark::show_bookmark_popup(ui, self);
+                let bookmark_action = bookmark::show_bookmark_popup(&ctx, self);
                 // Process the bookmark action
                 match bookmark_action {
                     bookmark::BookmarkAction::Navigate(path) => self.navigate_to_dir(path),
@@ -1197,34 +1198,34 @@ impl eframe::App for Kiorg {
                 }
             }
             Some(PopupType::Themes(_)) => {
-                theme::draw(self, ui);
+                theme::draw(self, &ctx);
             }
             Some(PopupType::Plugins) => {
-                plugin::draw(self, ui);
+                plugin::draw(self, &ctx);
             }
             Some(PopupType::FileDrop(_)) => {
-                file_drop::draw(ui, self);
+                file_drop::draw(&ctx, self);
             }
             Some(PopupType::Teleport(_)) => {
-                teleport::draw(ui, self);
+                teleport::draw(&ctx, self);
             }
             Some(PopupType::SortToggle) => {
-                sort_toggle::show_sort_toggle_popup(self, ui);
+                sort_toggle::show_sort_toggle_popup(self, &ctx);
             }
             Some(PopupType::UpdateConfirm(_)) => {
-                update::show_update_confirm_popup(ui, self);
+                update::show_update_confirm_popup(&ctx, self);
             }
             Some(PopupType::UpdateProgress(_)) => {
-                update::show_update_progress(ui, self);
+                update::show_update_progress(&ctx, self);
             }
             Some(PopupType::UpdateRestart) => {
-                update::show_update_restart_popup(ui, self);
+                update::show_update_restart_popup(&ctx, self);
             }
             Some(PopupType::ActionHistory) => {
-                action_history::draw(ui, self);
+                action_history::draw(&ctx, self);
             }
             Some(PopupType::GoToPath(_)) => {
-                crate::ui::popup::goto_path::draw(ui, self);
+                crate::ui::popup::goto_path::draw(&ctx, self);
             }
             None => {}
         }
@@ -1285,7 +1286,7 @@ impl eframe::App for Kiorg {
             });
         });
 
-        search_bar::draw(ui, self);
+        search_bar::draw(&ctx, self);
 
         if self.shutdown_requested {
             self.graceful_shutdown();
@@ -1294,6 +1295,6 @@ impl eframe::App for Kiorg {
         }
 
         // Draw toast notifications
-        self.toasts.show(ui);
+        self.toasts.show(&ctx);
     }
 }
