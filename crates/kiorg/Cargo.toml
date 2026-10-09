@@ -1,6 +1,6 @@
 [package]
 name = "kiorg"
-version = "1.6.2"
+version = "1.7.0"
 edition = "2024"
 rust-version = "1.87"
 authors = ["houqp"]
@@ -54,16 +54,16 @@ uuid = { version = "1.0", features = ["v4", "serde"] }
 regex = "1"
 snafu = "0.8"
 zip = { version = "6", default-features = false, features = [
-    "aes-crypto",
-    "bzip2",
-    "deflate64",
-    "deflate",
-    "ppmd",
-    "time",
-    "zstd",
-    # disable lzma and xz to avoid dynamic linking to system liblzma
-    # "lzma",
-    # "xz",
+  "aes-crypto",
+  "bzip2",
+  "deflate64",
+  "deflate",
+  "ppmd",
+  "time",
+  "zstd",
+  # disable lzma and xz to avoid dynamic linking to system liblzma
+  # "lzma",
+  # "xz",
 ] }
 
 self_update = { version = "0.42", features = ["rustls"] }
@@ -75,9 +75,9 @@ semver = "1.0"
 # code highlight
 yazi-prebuilt = { version = "0.1.0" }
 syntect = { version = "5", default-features = false, features = [
-    "parsing",
-    "plist-load",
-    "regex-onig",
+  "parsing",
+  "plist-load",
+  "regex-onig",
 ] }
 
 # tar handling
@@ -103,10 +103,20 @@ egui_term = { git = "https://github.com/houqp/egui_term.git", rev = "c662ba0df76
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.5.2"
-objc2-app-kit = { version = "0.2.2", features = ["NSWorkspace", "NSRunningApplication"] }
-objc2-foundation = { version = "0.2.2", features = ["NSURL", "NSString", "NSArray", "NSFileManager"] }
+objc2-app-kit = { version = "0.2.2", features = [
+  "NSWorkspace",
+  "NSRunningApplication",
+] }
+objc2-foundation = { version = "0.2.2", features = [
+  "NSURL",
+  "NSString",
+  "NSArray",
+  "NSFileManager",
+] }
 objc2-uniform-type-identifiers = { version = "0.2.2", features = ["UTType"] }
-pdfium-bind = { path = "../pdfium-bind", default-features = false, features = ["static"] }
+pdfium-bind = { path = "../pdfium-bind", default-features = false, features = [
+  "static",
+] }
 
 [target.'cfg(not(target_os = "macos"))'.dependencies]
 # we don't have static pdfium build for windows and linux yet, embed dynamic lib to workaround
@@ -114,8 +124,8 @@ pdfium-bind = { path = "../pdfium-bind" }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-sys = { version = "0.61.2", features = [
-    "Win32_Foundation",
-    "Win32_Storage_FileSystem",
+  "Win32_Foundation",
+  "Win32_Storage_FileSystem",
 ] }
 
 [[bench]]
@@ -133,8 +143,8 @@ criterion = "0.5"
 egui_kittest = { version = "0.34", features = ["eframe"] }
 kiorg = { path = ".", features = ["testing"] }
 windows-sys = { version = "0.61.0", features = [
-    "Win32_Foundation",
-    "Win32_Storage_FileSystem",
+  "Win32_Foundation",
+  "Win32_Storage_FileSystem",
 ] }
 
 [package.metadata.bundle]
