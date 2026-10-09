@@ -16,6 +16,25 @@ fn is_cancel_keys(key: Key) -> bool {
 // Helper function to handle a shortcut action
 #[allow(clippy::too_many_lines)]
 fn handle_shortcut_action(app: &mut Kiorg, ctx: &egui::Context, action: &ShortcutAction) {
+    if app.picker.is_some() {
+        use crate::picker::{self, Disposition};
+        match picker::intercept(action) {
+            Disposition::Activate => {
+                picker::activate(app, None);
+                return;
+            }
+            Disposition::Cancel => {
+                picker::cancel(app);
+                return;
+            }
+            Disposition::Block => {
+                app.notify_info("Not available in file chooser mode");
+                return;
+            }
+            Disposition::Pass => {}
+        }
+    }
+
     match action {
         ShortcutAction::ShowFilePreview => popup_preview::handle_show_file_popup(app, ctx),
         ShortcutAction::MoveDown => app.move_selection(1),
@@ -439,6 +458,11 @@ fn process_key(
         // Reset filter when closing search bar
         let tab = app.tab_manager.current_tab_mut();
         tab.update_filtered_cache(&None, false, false);
+        return;
+    }
+
+    // File-chooser mode: Esc / Ctrl+Enter / Tab
+    if app.picker.is_some() && crate::picker::handle_raw_key(app, key, modifiers) {
         return;
     }
 

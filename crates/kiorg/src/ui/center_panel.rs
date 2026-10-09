@@ -607,7 +607,12 @@ pub fn draw(app: &mut Kiorg, ui: &mut Ui, width: f32, height: f32) {
         if path.is_dir() {
             app.navigate_to_dir(path);
         } else if path.is_file() {
-            app.open_file(path);
+            if app.picker.is_some() {
+                // file-chooser mode: double-click picks the file instead of opening it
+                crate::picker::activate(app, Some(path));
+            } else {
+                app.open_file(path);
+            }
         }
     }
 
@@ -625,6 +630,17 @@ pub fn draw(app: &mut Kiorg, ui: &mut Ui, width: f32, height: f32) {
 
     if app.is_dragging() {
         ui.ctx().set_cursor_icon(egui::CursorIcon::Grabbing);
+    }
+
+    // File-chooser mode: only non-destructive context menu actions are allowed
+    if app.picker.is_some()
+        && !matches!(
+            context_menu_action,
+            ContextMenuAction::None | ContextMenuAction::Add | ContextMenuAction::Copy
+        )
+    {
+        app.notify_info("Not available in file chooser mode");
+        context_menu_action = ContextMenuAction::None;
     }
 
     // Handle context menu action captured from closures
@@ -692,6 +708,10 @@ pub fn draw(app: &mut Kiorg, ui: &mut Ui, width: f32, height: f32) {
 }
 
 fn handle_file_drop(ctx: &egui::Context, app: &mut Kiorg) {
+    // dropping files copies/moves them into the current directory: not in file-chooser mode
+    if app.picker.is_some() {
+        return;
+    }
     ctx.input(|i| {
         if !i.raw.dropped_files.is_empty() {
             let mut dropped_paths = Vec::new();
