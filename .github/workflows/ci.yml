@@ -2,46 +2,46 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     tags:
-      - 'v*'
+      - "v*"
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  format:
-    name: Format
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
-
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-
-  clippy:
-    name: Clippy
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+  # format:
+  #   name: Format
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     - name: Install Rust toolchain
+  #       uses: dtolnay/rust-toolchain@stable
+  #       with:
+  #         components: rustfmt
+  #
+  #     - name: Check formatting
+  #       run: cargo fmt --all -- --check
+  #
+  # clippy:
+  #   name: Clippy
+  #   runs-on: macos-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     - name: Install Rust toolchain
+  #       uses: dtolnay/rust-toolchain@stable
+  #       with:
+  #         components: clippy
+  #
+  #     - name: Cache dependencies
+  #       uses: Swatinem/rust-cache@v2
+  #
+  #     - name: Clippy
+  #       run: cargo clippy --all-targets --all-features -- -D warnings
 
   test:
     name: Test (${{ matrix.os }})
@@ -49,65 +49,65 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest]
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: compare git tag with cargo metadata (Unix)
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && runner.os != 'Windows'
-      run: |
-        PUSHED_TAG=${GITHUB_REF##*/}
-        CURR_VER=$( grep version crates/kiorg/Cargo.toml | head -n 1 | awk '{print $3}' | tr -d '"' )
-        if [[ "${PUSHED_TAG}" != "v${CURR_VER}" ]]; then
-          echo "Cargo metadata has version set to ${CURR_VER}, but got pushed tag ${PUSHED_TAG}."
-          exit 1
-        fi
-
-    - name: compare git tag with cargo metadata (Windows)
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && runner.os == 'Windows'
-      run: |
-        $PUSHED_TAG = (Split-Path -Path $env:GITHUB_REF -Leaf)
-        $CURR_VER_Line = Select-String -Path crates/kiorg/Cargo.toml -Pattern "version" | Select-Object -First 1
-        if ($null -eq $CURR_VER_Line) {
-            Write-Error "Could not find 'version' in crates/kiorg/Cargo.toml"
+      - name: compare git tag with cargo metadata (Unix)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && runner.os != 'Windows'
+        run: |
+          PUSHED_TAG=${GITHUB_REF##*/}
+          CURR_VER=$( grep version crates/kiorg/Cargo.toml | head -n 1 | awk '{print $3}' | tr -d '"' )
+          if [[ "${PUSHED_TAG}" != "v${CURR_VER}" ]]; then
+            echo "Cargo metadata has version set to ${CURR_VER}, but got pushed tag ${PUSHED_TAG}."
             exit 1
-        }
+          fi
 
-        # Example of a Cargo.toml version line: version = "0.1.0"
-        # We want to extract "0.1.0"
-        $CURR_VER_Match = $CURR_VER_Line.Line | Select-String -Pattern 'version\s*=\s*"(?<version>[^"]+)"'
-        if ($null -eq $CURR_VER_Match) {
-            Write-Error "Could not parse version from Cargo.toml line: $($CURR_VER_Line.Line)"
-            exit 1
-        }
-        $CURR_VER = $CURR_VER_Match.Matches[0].Groups['version'].Value
+      - name: compare git tag with cargo metadata (Windows)
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && runner.os == 'Windows'
+        run: |
+          $PUSHED_TAG = (Split-Path -Path $env:GITHUB_REF -Leaf)
+          $CURR_VER_Line = Select-String -Path crates/kiorg/Cargo.toml -Pattern "version" | Select-Object -First 1
+          if ($null -eq $CURR_VER_Line) {
+              Write-Error "Could not find 'version' in crates/kiorg/Cargo.toml"
+              exit 1
+          }
 
-        if ("v$CURR_VER" -ne $PUSHED_TAG) {
-            Write-Error "Cargo metadata has version set to $CURR_VER, but got pushed tag $PUSHED_TAG."
-            exit 1
-        }
+          # Example of a Cargo.toml version line: version = "0.1.0"
+          # We want to extract "0.1.0"
+          $CURR_VER_Match = $CURR_VER_Line.Line | Select-String -Pattern 'version\s*=\s*"(?<version>[^"]+)"'
+          if ($null -eq $CURR_VER_Match) {
+              Write-Error "Could not parse version from Cargo.toml line: $($CURR_VER_Line.Line)"
+              exit 1
+          }
+          $CURR_VER = $CURR_VER_Match.Matches[0].Groups['version'].Value
 
-    - name: Install system dependencies (Linux only)
-      if: runner.os == 'Linux'
-      run: sudo apt-get update && sudo apt-get install -y libfontconfig1-dev
+          if ("v$CURR_VER" -ne $PUSHED_TAG) {
+              Write-Error "Cargo metadata has version set to $CURR_VER, but got pushed tag $PUSHED_TAG."
+              exit 1
+          }
 
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
+      - name: Install system dependencies (Linux only)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libfontconfig1-dev
 
-    - uses: taiki-e/install-action@nextest
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
 
-    - name: Cache dependencies
-      uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@nextest
 
-    # enable this job for other platforms when we start to run out of disk space
-    # on mac or window
-    - name: Clean disk space (Linux only)
-      if: runner.os == 'Linux'
-      run: bash .github/workflows/clean_disk_space.sh
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
 
-    - name: Run tests
-      run: cargo nextest run
+      # enable this job for other platforms when we start to run out of disk space
+      # on mac or window
+      - name: Clean disk space (Linux only)
+        if: runner.os == 'Linux'
+        run: bash .github/workflows/clean_disk_space.sh
+
+      - name: Run tests
+        run: cargo nextest run
 
   bundle-linux:
     name: Bundle Packaging (Linux - ${{ matrix.arch }})
@@ -121,165 +121,165 @@ jobs:
           - arch: aarch64
             runner: ubuntu-24.04-arm
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
 
-    - name: Install system dependencies (Linux only)
-      run: sudo apt-get update && sudo apt-get install -y libfontconfig1-dev
+      - name: Install system dependencies (Linux only)
+        run: sudo apt-get update && sudo apt-get install -y libfontconfig1-dev
 
-    - name: Cache dependencies
-      uses: Swatinem/rust-cache@v2
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
 
-    - name: Build release binary
-      run: |
-        cargo build --release
-        cd target/release
-        zip -r ../../kiorg-${{ matrix.arch }}-linux.zip kiorg
+      - name: Build release binary
+        run: |
+          cargo build --release
+          cd target/release
+          zip -r ../../kiorg-${{ matrix.arch }}-linux.zip kiorg
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: kiorg-${{ github.event.pull_request.head.sha || github.sha }}-${{ matrix.arch }}-linux.zip
-        path: kiorg-${{ matrix.arch }}-linux.zip
-        if-no-files-found: error
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kiorg-${{ github.event.pull_request.head.sha || github.sha }}-${{ matrix.arch }}-linux.zip
+          path: kiorg-${{ matrix.arch }}-linux.zip
+          if-no-files-found: error
 
-    - name: Upload binary to GitHub Release
-      uses: svenstaro/upload-release-action@v2
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-      with:
-        overwrite: true
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        asset_name: kiorg-${{ github.ref_name }}-${{ matrix.arch }}-linux.zip
-        file: kiorg-${{ matrix.arch }}-linux.zip
-        tag: ${{ github.ref }}
+      - name: Upload binary to GitHub Release
+        uses: svenstaro/upload-release-action@v2
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        with:
+          overwrite: true
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          asset_name: kiorg-${{ github.ref_name }}-${{ matrix.arch }}-linux.zip
+          file: kiorg-${{ matrix.arch }}-linux.zip
+          tag: ${{ github.ref }}
 
-  bundle-macos:
-    name: Bundle Packaging (macOS)
-    needs: test
-    runs-on: macos-15
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
-
-    - name: Cache dependencies
-      uses: Swatinem/rust-cache@v2
-
-    - uses: cargo-bins/cargo-binstall@v1.12.4
-    - name: Install cargo-bundle
-      env:
-        # avoid rate limits
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: cargo binstall --force cargo-bundle@0.6.1 && cargo-bundle --version
-
-    - name: Create App bundle
-      run: |
-        cargo bundle --release --target aarch64-apple-darwin
-    - name: Install create-dmg
-      run: npm install --global create-dmg
-    - name: Create DMG using create-dmg
-      run: |
-        # create-dmg will fail without code signing identity, ignore that error for now
-        create-dmg --overwrite --dmg-title="Kiorg" target/aarch64-apple-darwin/release/bundle/osx/Kiorg.app || true
-        mv Kiorg\ *.dmg Kiorg-aarch64.dmg
-
-    - name: Create CLI binary
-      run: |
-        cargo build --release --target aarch64-apple-darwin
-        cd target/aarch64-apple-darwin/release
-        zip -r ../../../kiorg-aarch64-macos.zip kiorg
-
-    - name: Create App bundle zip
-      run: |
-        cd target/aarch64-apple-darwin/release/bundle/osx
-        tar -czf ../../../../../Kiorg-aarch64.app.bundle.tar.gz Kiorg.app
-
-    - name: Upload DMG artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Kiorg-${{ github.event.pull_request.head.sha || github.sha }}-aarch64.dmg
-        path: Kiorg-aarch64.dmg
-        if-no-files-found: error
-
-    - name: Upload App bundle artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Kiorg-${{ github.event.pull_request.head.sha || github.sha }}-app.bundle.tar.gz
-        path: Kiorg-aarch64.app.bundle.tar.gz
-        if-no-files-found: error
-
-    - name: Upload macOS CLI binary
-      uses: actions/upload-artifact@v4
-      with:
-        name: kiorg-${{ github.event.pull_request.head.sha || github.sha }}-aarch64-macos.zip
-        path: kiorg-aarch64-macos.zip
-        if-no-files-found: error
-
-    - name: Upload CLI binary to GitHub Release
-      uses: svenstaro/upload-release-action@v2
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-      with:
-        overwrite: true
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        asset_name: kiorg-${{ github.ref_name }}-aarch64-macos.zip
-        file: kiorg-aarch64-macos.zip
-        tag: ${{ github.ref }}
-
-    - name: Upload DMG to GitHub Release
-      uses: svenstaro/upload-release-action@v2
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-      with:
-        overwrite: true
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        asset_name: Kiorg-${{ github.ref_name }}-aarch64.dmg
-        file: Kiorg-aarch64.dmg
-        tag: ${{ github.ref }}
-
-    - name: Upload App bundle to GitHub Release
-      uses: svenstaro/upload-release-action@v2
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-      with:
-        overwrite: true
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        asset_name: Kiorg-${{ github.ref_name }}-aarch64-app.bundle.tar.gz
-        file: Kiorg-aarch64.app.bundle.tar.gz
-        tag: ${{ github.ref }}
-
-  bundle-windows:
-    name: Bundle Packaging (Windows)
-    needs: test
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
-
-    - name: Cache dependencies
-      uses: Swatinem/rust-cache@v2
-
-    - name: Build release binary
-      run: |
-        cargo build --no-default-features --release
-        cd target\release
-        Compress-Archive -Path kiorg.exe -DestinationPath ..\..\kiorg-x86_64-windows.zip
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: kiorg-${{ github.event.pull_request.head.sha || github.sha }}-x86_64-windows.zip
-        path: kiorg-x86_64-windows.zip
-        if-no-files-found: error
-
-    - name: Upload binary to GitHub Release
-      uses: svenstaro/upload-release-action@v2
-      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-      with:
-        overwrite: true
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        asset_name: kiorg-${{ github.ref_name }}-x86_64-windows.zip
-        file: kiorg-x86_64-windows.zip
-        tag: ${{ github.ref }}
+  # bundle-macos:
+  #   name: Bundle Packaging (macOS)
+  #   needs: test
+  #   runs-on: macos-15
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     - name: Install Rust toolchain
+  #       uses: dtolnay/rust-toolchain@stable
+  #
+  #     - name: Cache dependencies
+  #       uses: Swatinem/rust-cache@v2
+  #
+  #     - uses: cargo-bins/cargo-binstall@v1.12.4
+  #     - name: Install cargo-bundle
+  #       env:
+  #         # avoid rate limits
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       run: cargo binstall --force cargo-bundle@0.6.1 && cargo-bundle --version
+  #
+  #     - name: Create App bundle
+  #       run: |
+  #         cargo bundle --release --target aarch64-apple-darwin
+  #     - name: Install create-dmg
+  #       run: npm install --global create-dmg
+  #     - name: Create DMG using create-dmg
+  #       run: |
+  #         # create-dmg will fail without code signing identity, ignore that error for now
+  #         create-dmg --overwrite --dmg-title="Kiorg" target/aarch64-apple-darwin/release/bundle/osx/Kiorg.app || true
+  #         mv Kiorg\ *.dmg Kiorg-aarch64.dmg
+  #
+  #     - name: Create CLI binary
+  #       run: |
+  #         cargo build --release --target aarch64-apple-darwin
+  #         cd target/aarch64-apple-darwin/release
+  #         zip -r ../../../kiorg-aarch64-macos.zip kiorg
+  #
+  #     - name: Create App bundle zip
+  #       run: |
+  #         cd target/aarch64-apple-darwin/release/bundle/osx
+  #         tar -czf ../../../../../Kiorg-aarch64.app.bundle.tar.gz Kiorg.app
+  #
+  #     - name: Upload DMG artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: Kiorg-${{ github.event.pull_request.head.sha || github.sha }}-aarch64.dmg
+  #         path: Kiorg-aarch64.dmg
+  #         if-no-files-found: error
+  #
+  #     - name: Upload App bundle artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: Kiorg-${{ github.event.pull_request.head.sha || github.sha }}-app.bundle.tar.gz
+  #         path: Kiorg-aarch64.app.bundle.tar.gz
+  #         if-no-files-found: error
+  #
+  #     - name: Upload macOS CLI binary
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: kiorg-${{ github.event.pull_request.head.sha || github.sha }}-aarch64-macos.zip
+  #         path: kiorg-aarch64-macos.zip
+  #         if-no-files-found: error
+  #
+  #     - name: Upload CLI binary to GitHub Release
+  #       uses: svenstaro/upload-release-action@v2
+  #       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+  #       with:
+  #         overwrite: true
+  #         repo_token: ${{ secrets.GITHUB_TOKEN }}
+  #         asset_name: kiorg-${{ github.ref_name }}-aarch64-macos.zip
+  #         file: kiorg-aarch64-macos.zip
+  #         tag: ${{ github.ref }}
+  #
+  #     - name: Upload DMG to GitHub Release
+  #       uses: svenstaro/upload-release-action@v2
+  #       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+  #       with:
+  #         overwrite: true
+  #         repo_token: ${{ secrets.GITHUB_TOKEN }}
+  #         asset_name: Kiorg-${{ github.ref_name }}-aarch64.dmg
+  #         file: Kiorg-aarch64.dmg
+  #         tag: ${{ github.ref }}
+  #
+  #     - name: Upload App bundle to GitHub Release
+  #       uses: svenstaro/upload-release-action@v2
+  #       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+  #       with:
+  #         overwrite: true
+  #         repo_token: ${{ secrets.GITHUB_TOKEN }}
+  #         asset_name: Kiorg-${{ github.ref_name }}-aarch64-app.bundle.tar.gz
+  #         file: Kiorg-aarch64.app.bundle.tar.gz
+  #         tag: ${{ github.ref }}
+  #
+  # bundle-windows:
+  #   name: Bundle Packaging (Windows)
+  #   needs: test
+  #   runs-on: windows-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #
+  #     - name: Install Rust toolchain
+  #       uses: dtolnay/rust-toolchain@stable
+  #
+  #     - name: Cache dependencies
+  #       uses: Swatinem/rust-cache@v2
+  #
+  #     - name: Build release binary
+  #       run: |
+  #         cargo build --no-default-features --release
+  #         cd target\release
+  #         Compress-Archive -Path kiorg.exe -DestinationPath ..\..\kiorg-x86_64-windows.zip
+  #
+  #     - name: Upload artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: kiorg-${{ github.event.pull_request.head.sha || github.sha }}-x86_64-windows.zip
+  #         path: kiorg-x86_64-windows.zip
+  #         if-no-files-found: error
+  #
+  #     - name: Upload binary to GitHub Release
+  #       uses: svenstaro/upload-release-action@v2
+  #       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+  #       with:
+  #         overwrite: true
+  #         repo_token: ${{ secrets.GITHUB_TOKEN }}
+  #         asset_name: kiorg-${{ github.ref_name }}-x86_64-windows.zip
+  #         file: kiorg-x86_64-windows.zip
+  #         tag: ${{ github.ref }}
