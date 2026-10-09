@@ -2,6 +2,8 @@
 [![Releases](https://img.shields.io/badge/-releases-blue)](https://github.com/houqp/kiorg/releases)
 [![discord](https://dcbadge.limes.pink/api/server/https://discord.gg/TdTb2CHfpr?style=flat&compact=true)](https://discord.gg/TdTb2CHfpr)
 
+[![CI](https://github.com/markushln/kiorg/actions/workflows/ci.yml/badge.svg)](https://github.com/markushln/kiorg/actions/workflows/ci.yml)
+
 <p align="center">
   <img src="assets/icons/1024x1024@2x.png" alt="Kiorg Logo" width="200px">
 </p>
