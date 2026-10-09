@@ -1,11 +1,12 @@
 [workspace]
 members = [
-    "crates/kiorg",
-    "crates/kiorg_plugin",
-    "crates/mimeapps",
-    "crates/kiorg_plugin/examples/demo_plugin",
-    "plugins/heif",
-    "crates/pdfium-bind",
+  "crates/kiorg",
+  "crates/kiorg_plugin",
+  "crates/mimeapps",
+  "crates/xdg-desktop-portal-kiorg",
+  "crates/kiorg_plugin/examples/demo_plugin",
+  "plugins/heif",
+  "crates/pdfium-bind",
 ]
 default-members = ["crates/kiorg"]
 resolver = "2"

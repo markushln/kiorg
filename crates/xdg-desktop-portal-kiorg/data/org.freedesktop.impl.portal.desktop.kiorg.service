@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.freedesktop.impl.portal.desktop.kiorg
+Exec=/usr/libexec/xdg-desktop-portal-kiorg
+SystemdService=xdg-desktop-portal-kiorg.service
