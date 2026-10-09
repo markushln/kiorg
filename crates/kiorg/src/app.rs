@@ -191,6 +191,8 @@ pub struct Kiorg {
     pub plugin_manager: crate::plugins::PluginManager,
     // Inline rename
     pub inline_rename: Option<Rename>,
+    // File-chooser mode (`kiorg --picker`), see `crate::picker`
+    pub picker: Option<crate::picker::PickerState>,
 }
 
 impl Kiorg {
@@ -340,6 +342,7 @@ impl Kiorg {
             dragged_file: None,
             plugin_manager,
             inline_rename: None,
+            picker: None,
         };
 
         app.refresh_entries();
@@ -653,6 +656,10 @@ impl Kiorg {
     }
 
     pub fn start_drag(&mut self, file_path: PathBuf) {
+        // drag & drop moves files, which is disabled in file-chooser mode
+        if self.picker.is_some() {
+            return;
+        }
         self.dragged_file = Some(file_path);
     }
 
@@ -911,6 +918,11 @@ impl Kiorg {
             return;
         }
 
+        // File-name field of the save dialog owns the keyboard while focused
+        if crate::picker::handle_key_press(ctx, self) {
+            return;
+        }
+
         input::process_input_events(self, ctx);
     }
 
@@ -983,10 +995,13 @@ impl Kiorg {
             tracing::warn!("Error shutting down plugins: {}", e);
         }
 
-        // Save application state before shutting down
-        if let Err(e) = self.save_app_state() {
-            self.toasts
-                .error(format!("Failed to save application state: {e}"));
+        // Save application state before shutting down. A file-chooser instance must not
+        // overwrite the tabs of the user's regular Kiorg session.
+        if self.picker.is_none() {
+            if let Err(e) = self.save_app_state() {
+                self.toasts
+                    .error(format!("Failed to save application state: {e}"));
+            }
         }
 
         pdfium_bind::cleanup_cache();
@@ -1287,6 +1302,7 @@ impl eframe::App for Kiorg {
         });
 
         search_bar::draw(&ctx, self);
+        crate::picker::draw(&ctx, self);
 
         if self.shutdown_requested {
             self.graceful_shutdown();

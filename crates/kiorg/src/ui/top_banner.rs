@@ -66,7 +66,8 @@ pub fn draw(app: &mut Kiorg, ui: &mut Ui) {
                         ui.close();
                     }
 
-                    if ui.button("Check for update").clicked() {
+                    // no self-update from a file-chooser instance
+                    if app.picker.is_none() && ui.button("Check for update").clicked() {
                         update::check_for_updates(app);
                         ui.close();
                     }
