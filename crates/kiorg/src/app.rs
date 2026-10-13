@@ -1286,7 +1286,7 @@ impl eframe::App for Kiorg {
             });
         });
 
-        search_bar::draw(&ctx, self);
+        search_bar::draw(ui, self);
 
         if self.shutdown_requested {
             self.graceful_shutdown();
