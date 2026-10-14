@@ -1,0 +1,4 @@
+# ~/.config/xdg-desktop-portal/portals.conf
+[preferred]
+default=gtk
+org.freedesktop.impl.portal.FileChooser=kiorg

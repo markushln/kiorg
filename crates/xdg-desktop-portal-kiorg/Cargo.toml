@@ -1,0 +1,30 @@
+[package]
+name = "xdg-desktop-portal-kiorg"
+version = "0.1.0"
+edition = "2021"
+description = "xdg-desktop-portal FileChooser backend that uses Kiorg as the file picker"
+
+[lib]
+name = "xdg_desktop_portal_kiorg"
+path = "src/lib.rs"
+
+[[bin]]
+name = "xdg-desktop-portal-kiorg"
+path = "src/main.rs"
+
+[dependencies]
+zbus = { version = "5", default-features = false, features = ["tokio"] }
+tokio = { version = "1", features = [
+  "rt-multi-thread",
+  "macros",
+  "process",
+  "sync",
+  "io-util",
+  "signal",
+  "time",
+] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[dev-dependencies]
+tempfile = "3"
