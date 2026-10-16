@@ -39,10 +39,10 @@
           openssl
           zlib
 
-          xorg.libX11
-          xorg.libXcursor
-          xorg.libXi
-          xorg.libXrandr
+          libx11
+          libxcursor
+          libxi
+          libxrandr
 
           git
           patchelf
@@ -66,10 +66,10 @@
           openssl
           zlib
           stdenv.cc.cc.lib
-          xorg.libX11
-          xorg.libXcursor
-          xorg.libXi
-          xorg.libXrandr
+          libx11
+          libxcursor
+          libxi
+          libxrandr
         ]);
       };
     };
