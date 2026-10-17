@@ -3,6 +3,7 @@ pub mod config;
 pub mod font;
 pub mod input;
 pub mod models;
+pub mod editor;
 pub mod open_wrap;
 pub mod picker;
 pub mod plugins;
