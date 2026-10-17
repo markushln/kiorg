@@ -261,6 +261,8 @@ pub enum ShortcutAction {
     CutEntry,
     PasteEntry,
     OpenWithCommand,
+    /// Open the selected file in `$KIORG_EDITOR` (default `nvim`) in a new terminal window
+    OpenInEditor,
 
     // Tabs
     CreateTab,
@@ -788,6 +790,9 @@ pub fn default_shortcuts() -> Shortcuts {
         KeyboardShortcut::new("o").with_shift(),
         ShortcutAction::OpenWithCommand,
     );
+
+    // Edit the selected file in the user's editor (nvim by default)
+    add_shortcut(KeyboardShortcut::new("e"), ShortcutAction::OpenInEditor);
 
     add_shortcut(
         KeyboardShortcut::new("u").with_ctrl(),
