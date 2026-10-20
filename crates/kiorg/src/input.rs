@@ -267,6 +267,22 @@ fn handle_shortcut_action(app: &mut Kiorg, ctx: &egui::Context, action: &Shortcu
                 app.show_popup = Some(PopupType::OpenWith);
             }
         }
+        ShortcutAction::OpenInEditor => {
+            let selected = app
+                .tab_manager
+                .current_tab_ref()
+                .selected_entry()
+                .map(|e| e.meta.path.clone());
+            match selected {
+                Some(path) => {
+                    if let Err(error) = crate::editor::open_in_editor(&path) {
+                        tracing::error!(err = ?error, "error starting editor");
+                        app.notify_error(error);
+                    }
+                }
+                None => {}
+            }
+        }
         ShortcutAction::PageUp => app.move_selection_by_page(-1),
         ShortcutAction::PageDown => app.move_selection_by_page(1),
         ShortcutAction::SelectAllEntries => app.select_all_entries(),

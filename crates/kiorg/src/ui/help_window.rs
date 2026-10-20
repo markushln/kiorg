@@ -141,6 +141,10 @@ pub fn show_help_window(
                             "Open file with custom command",
                         ),
                         (
+                            ShortcutAction::OpenInEditor,
+                            "Edit file in $KIORG_EDITOR (default: nvim) in a new terminal",
+                        ),
+                        (
                             ShortcutAction::DeleteEntry,
                             "Delete selected file/directory",
                         ),
